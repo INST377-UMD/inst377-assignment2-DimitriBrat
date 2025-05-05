@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Class Activities - Home</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li onclick="navigate('index.html')">Home</li>
+      <li onclick="navigate('stocks.html')">Stocks</li>
+      <li onclick="navigate('dogs.html')">Dogs</li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Welcome to Class Activities</h1>
+    <p id="quote">Loading quote...</p>
+    <div class="button-container">
+      <button class="custom-button" onclick="navigate('stocks.html')">Stocks</button>
+      <button class="custom-button" onclick="navigate('dogs.html')">Dogs</button>
+    </div>
+  </main>
+
+  <div class="audio-controls">
+    <h2>Voice Commands:</h2>
+    <ul>
+      <li>Say "Hello"</li>
+      <li>Say "Change the color to red"</li>
+      <li>Say "Navigate to home"</li>
+      <li>Say "Navigate to stocks"</li>
+      <li>Say "Navigate to dogs"</li>
+    </ul>
+    <button onclick="startAudio()">Turn On Audio</button>
+    <button onclick="stopAudio()">Turn Off Audio</button>
+  </div>
+
+  <script>
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    async function loadQuote() {
+      try {
+        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        const targetUrl = encodeURIComponent('https://zenquotes.io/api/random');
+        const response = await fetch(`${proxyUrl}${targetUrl}`);
+        const result = await response.json();
+        const data = JSON.parse(result.contents);
+        const quote = data[0];
+
+        // Replace problematic dash symbols with a simple dash
+        const author = quote.a.replace(/â€”|—/g, '-');
+        document.getElementById('quote').textContent = `"${quote.q}" - ${author}`;
+      } catch (err) {
+        document.getElementById('quote').textContent = 'Could not load quote.';
+      }
+    }
+
+    function startAudio() {
+      if (annyang) {
+        const commands = {
+          'hello': () => alert('Hello World'),
+          'change the color to *color': color => document.body.style.backgroundColor = color,
+          'navigate to home': () => navigate('index.html'),
+          'navigate to stocks': () => navigate('stocks.html'),
+          'navigate to dogs': () => navigate('dogs.html'),
+          'navigate to *page': page => {
+            page = page.toLowerCase();
+            if (page.includes('home')) navigate('index.html');
+            else if (page.includes('stock')) navigate('stocks.html');
+            else if (page.includes('dog')) navigate('dogs.html');
+          }
+        };
+        annyang.addCommands(commands);
+        annyang.start();
+      }
+    }
+
+    function stopAudio() {
+      if (annyang) annyang.abort();
+    }
+
+    loadQuote();
+    startAudio();
+  </script>
+</body>
+</html>

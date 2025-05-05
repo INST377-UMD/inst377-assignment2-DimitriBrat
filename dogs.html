@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dogs - Class Activities</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li onclick="navigate('index.html')">Home</li>
+      <li onclick="navigate('stocks.html')">Stocks</li>
+      <li onclick="navigate('dogs.html')">Dogs</li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Dog Gallery</h1>
+    <div id="carousel" class="carousel"></div>
+
+    <h2>Dog Breeds</h2>
+    <div id="breedButtons" class="button-container"></div>
+
+    <div class="dropdown-container">
+      <label for="breedSelect">Select another breed:</label>
+      <select id="breedSelect">
+        <option value="">-- Choose a breed --</option>
+      </select>
+    </div>
+  </main>
+
+  <!-- Modal Popup for Breed Info -->
+  <div id="breedInfo" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal()">&times;</span>
+      <h3 id="breedName"></h3>
+      <p id="breedSummary"></p>
+      <p id="breedLife"></p>
+    </div>
+  </div>
+
+  <div class="audio-controls">
+    <h2>Voice Commands:</h2>
+    <ul>
+      <li>Say "Hello"</li>
+      <li>Say "Change the color to red"</li>
+      <li>Say "Navigate to home"</li>
+      <li>Say "Navigate to stocks"</li>
+      <li>Say "Load Dog Breed Labrador"</li>
+    </ul>
+    <button onclick="startAudio()">Turn On Audio</button>
+    <button onclick="stopAudio()">Turn Off Audio</button>
+  </div>
+
+  <script>
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    async function loadDogs() {
+      const response = await fetch('https://dog.ceo/api/breeds/image/random/10');
+      const data = await response.json();
+      const carousel = document.getElementById('carousel');
+      carousel.innerHTML = '';
+      data.message.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'carousel-img';
+        carousel.appendChild(img);
+      });
+    }
+
+    async function loadBreeds() {
+      const res = await fetch('https://api.thedogapi.com/v1/breeds');
+      const breeds = await res.json();
+      const buttonContainer = document.getElementById('breedButtons');
+      const dropdown = document.getElementById('breedSelect');
+      window.breedData = breeds;
+
+      breeds.forEach((breed, index) => {
+        if (index < 5) {
+          const btn = document.createElement('button');
+          btn.className = 'custom-button';
+          btn.textContent = breed.name;
+          btn.onclick = () => showBreedInfo(breed);
+          buttonContainer.appendChild(btn);
+        } else {
+          const option = document.createElement('option');
+          option.value = breed.name;
+          option.textContent = breed.name;
+          dropdown.appendChild(option);
+        }
+      });
+
+      dropdown.onchange = () => {
+        const selectedName = dropdown.value;
+        const match = breeds.find(b => b.name === selectedName);
+        if (match) showBreedInfo(match);
+      };
+    }
+
+    function showBreedInfo(breed) {
+      const temperament = breed.temperament || "no well-known temperament";
+      const lifeSpan = breed.life_span || "unknown lifespan";
+      const summary = `The ${breed.name} is known for being ${temperament.toLowerCase()}.`;
+
+      document.getElementById('breedName').textContent = breed.name;
+      document.getElementById('breedSummary').textContent = summary;
+      document.getElementById('breedLife').textContent = `Life expectancy: ${lifeSpan}`;
+      document.getElementById('breedInfo').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('breedInfo').classList.remove('show');
+    }
+
+    function startAudio() {
+      if (annyang) {
+        const commands = {
+          'hello': () => alert('Hello World'),
+          'change the color to *color': color => document.body.style.backgroundColor = color,
+          'navigate to home': () => navigate('index.html'),
+          'navigate to stocks': () => navigate('stocks.html'),
+          'navigate to dogs': () => navigate('dogs.html'),
+          'load dog breed *name': name => {
+            const match = window.breedData.find(b =>
+              b.name.toLowerCase().includes(name.toLowerCase())
+            );
+            if (match) showBreedInfo(match);
+          }
+        };
+        annyang.addCommands(commands);
+        annyang.start();
+      }
+    }
+
+    function stopAudio() {
+      if (annyang) annyang.abort();
+    }
+
+    loadDogs();
+    loadBreeds();
+    startAudio();
+  </script>
+</body>
+</html>
